@@ -22,6 +22,7 @@
 #include "usart.h"
 
 #define USART_TX 2
+#define USART_RX 3
 
 inline void usart_init() {
 	/* enable USART2 in APB1 */
@@ -46,10 +47,25 @@ inline void usart_init() {
 	/* set USART2_TX AF (AF7) */
 	GPIOA->AFR[0] |= 0x00000700;
 
+	/* reset PA3 mode */
+	GPIOA->MODER &= ~(3 << (USART_RX << 1));
+	/* PA3 in Alternate function mode */
+	GPIOA->MODER |= (2 << (USART_RX << 1));
+	/* push/pull */
+	GPIOA->OTYPER &= ~(1 << 2);
+	/* high speed */
+	GPIOA->OSPEEDR |= (3 << (USART_RX << 1));
+	/* no pull-up/pull-down */
+	GPIOA->PUPDR &= ~(3 << (USART_RX << 1));
+	/* reset PA3 AF mode */
+	GPIOA->AFR[0] &= ~(0x0000F000);
+	/* set USART2_RX AF (AF7) */
+	GPIOA->AFR[0] |= 0x00007000;
+
 	/* USART2 configuration */
 
-	/* enable transmitter */
-	USART2->CR1 |= USART_CR1_TE;
+	/* enable transmitter, receiver */
+	USART2->CR1 |= USART_CR1_TE | USART_CR1_RE;
 	/* 1 bit stop */
 	USART2->CR2 &= ~(USART_CR2_STOP_0 | USART_CR2_STOP_1);
 	/* USARTDIV = 273.4375 (baud rate 9600) */
@@ -59,7 +75,7 @@ inline void usart_init() {
 }
 
 inline void usart_putc(char c) {
-	while ((USART2->SR & USART_SR_TC) == 0);
+	while (!(USART2->SR & USART_SR_TC));
 	USART2->DR = (uint8_t)c;
 }
 
@@ -67,4 +83,9 @@ void usart_puts(char *buffer) {
 	while (*buffer != '\0') {
 		usart_putc(*(buffer++));
 	}
+}
+
+char usart_getc() {
+	while (!(USART2->SR & USART_SR_RXNE));
+	return (char)USART2->DR;
 }

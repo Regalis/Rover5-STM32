@@ -27,9 +27,10 @@ AR=arm-none-eabi-ar
 
 MCU_CORE=cortex-m4
 MCU=STM32F401xE
+OPENOCD_SCRIPT=/usr/share/openocd/scripts/board/st_nucleo_f401re.cfg
 
 CCFLAGS=-Wall -mcpu=$(MCU_CORE) -mlittle-endian -mthumb \
-		-mthumb-interwork -ffunction-sections -fdata-sections
+		-ffunction-sections -fdata-sections
 
 CCFLAGS+=$(INCLUDE) $(DEFS) -g -Os -Werror
 

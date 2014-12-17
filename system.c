@@ -80,7 +80,7 @@ void SystemInit() {
 	/* Set APB1 Low speed prescaler (APB1) DIV2 */
 	RCC->CFGR |= RCC_CFGR_PPRE1_DIV2;
 
-	/* SET APB2 High speed srescaler (APB2) DIV1 */
+	/* SET APB2 High speed prescaler (APB2) DIV1 */
 	RCC->CFGR &= ~(RCC_CFGR_PPRE2);
 }
 

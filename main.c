@@ -23,6 +23,7 @@
 #include "usart.h"
 #include "string_utils.h"
 #include "movement.h"
+#include "bluetooth.h"
 
 #define LED_ON() GPIOA->BSRRL |= (1 << 5)
 #define LED_OFF() GPIOA->BSRRH |= (1 << 5)
@@ -31,6 +32,9 @@ int main() {
 	delay_init();
 	engines_init();
 	usart_init();
+	bluetooth_init();
+
+	/* LED init */
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
 	GPIOA->MODER |= (1 << (5 << 1));
 	GPIOA->OSPEEDR |= (3 << (5 << 1));
@@ -39,36 +43,26 @@ int main() {
 
 	usart_puts("\n\rHello world\n\r");
 
-	char buffer[100];
-	uint16_t position;
-	//uint8_t i = 0xFF;
-	//engines_set_direction(ENGINES_ALL, ENGINES_FORWARD);
 	while (1) {
-		position = engines_read_position(ENGINES_LEFT);
-		itoa(position, buffer);
-		usart_puts("LEFT: ");
-		usart_puts(buffer);
-		usart_puts(" RIGHT: ");
-		position = engines_read_position(ENGINES_RIGHT);
-		itoa(position, buffer);
-		usart_puts(buffer);
-		usart_puts("\r");
 
-		_delay_ms(2000);
-		movement_forward(10);
-		_delay_ms(2000);
-		movement_backward(10);
-		_delay_ms(2000);
-		movement_rotate(90);
-		_delay_ms(2000);
-		movement_rotate(-90);
-		_delay_ms(2000);
-		
+		char command = bluetooth_getc_timeout(10000);
 
-		_delay_ms(1000);
-		LED_ON();
-		_delay_ms(1000);
-		LED_OFF();
+		if (bluetooth_check_timeout())
+			command = 's';
+
+		if (command == 'K' || command == 'f') {
+			engines_set_direction(ENGINES_ALL, ENGINES_FORWARD);
+		} else if (command == 'J' || command == 'b') {
+			engines_set_direction(ENGINES_ALL, ENGINES_BACKWARD);
+		} else if (command == 'L' || command == 'r') {
+			engines_set_direction(ENGINES_RIGHT, ENGINES_BACKWARD);
+			engines_set_direction(ENGINES_LEFT, ENGINES_FORWARD);
+		} else if (command == 'H' || command == 'l') {
+			engines_set_direction(ENGINES_RIGHT, ENGINES_FORWARD);
+			engines_set_direction(ENGINES_LEFT, ENGINES_BACKWARD);
+		} else {
+			engines_stop(ENGINES_ALL);	
+		}
 	}
 
 }
